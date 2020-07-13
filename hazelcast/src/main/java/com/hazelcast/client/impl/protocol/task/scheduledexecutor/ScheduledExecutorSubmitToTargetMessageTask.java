@@ -98,4 +98,8 @@ public class ScheduledExecutorSubmitToTargetMessageTask
     private boolean isAutoDisposable() {
         return parameters.isAutoDisposableExists && parameters.autoDisposable;
     }
+
+    private boolean isAutoDisposable() {
+        return parameters.isAutoDisposableExists && parameters.autoDisposable;
+    }
 }
