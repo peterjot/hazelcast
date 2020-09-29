@@ -17,7 +17,9 @@
 package com.hazelcast.client.impl.proxy;
 
 import com.hazelcast.client.impl.protocol.ClientMessage;
+import com.hazelcast.client.impl.protocol.codec.ClientAddMigrationListenerCodec;
 import com.hazelcast.client.impl.protocol.codec.ClientAddPartitionLostListenerCodec;
+import com.hazelcast.client.impl.protocol.codec.ClientRemoveMigrationListenerCodec;
 import com.hazelcast.client.impl.protocol.codec.ClientRemovePartitionLostListenerCodec;
 import com.hazelcast.client.impl.spi.ClientClusterService;
 import com.hazelcast.client.impl.spi.ClientListenerService;
@@ -25,6 +27,7 @@ import com.hazelcast.client.impl.spi.ClientPartitionService;
 import com.hazelcast.client.impl.spi.EventHandler;
 import com.hazelcast.client.impl.spi.impl.ListenerMessageCodec;
 import com.hazelcast.cluster.Member;
+import com.hazelcast.internal.partition.MigrationStateImpl;
 import com.hazelcast.internal.partition.PartitionLostEventImpl;
 import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.Partition;
@@ -58,7 +61,7 @@ public final class PartitionServiceProxy implements PartitionService {
     @Override
     public Set<Partition> getPartitions() {
         final int partitionCount = partitionService.getPartitionCount();
-        Set<Partition> partitions = new LinkedHashSet<Partition>(partitionCount);
+        Set<Partition> partitions = new LinkedHashSet<>(partitionCount);
         for (int i = 0; i < partitionCount; i++) {
             final Partition partition = partitionService.getPartition(i);
             partitions.add(partition);
@@ -75,12 +78,13 @@ public final class PartitionServiceProxy implements PartitionService {
 
     @Override
     public UUID addMigrationListener(MigrationListener migrationListener) {
-        throw new UnsupportedOperationException();
+        EventHandler<ClientMessage> handler = new ClientMigrationEventHandler(migrationListener);
+        return listenerService.registerListener(createMigrationListenerCodec(), handler);
     }
 
     @Override
     public boolean removeMigrationListener(UUID registrationId) {
-        throw new UnsupportedOperationException();
+        return listenerService.deregisterListener(registrationId);
     }
 
     @Override
@@ -113,6 +117,30 @@ public final class PartitionServiceProxy implements PartitionService {
         };
     }
 
+    private ListenerMessageCodec createMigrationListenerCodec() {
+        return new ListenerMessageCodec() {
+            @Override
+            public ClientMessage encodeAddRequest(boolean localOnly) {
+                return ClientAddMigrationListenerCodec.encodeRequest(localOnly);
+            }
+
+            @Override
+            public UUID decodeAddResponse(ClientMessage clientMessage) {
+                return ClientAddMigrationListenerCodec.decodeResponse(clientMessage);
+            }
+
+            @Override
+            public ClientMessage encodeRemoveRequest(UUID realRegistrationId) {
+                return ClientRemoveMigrationListenerCodec.encodeRequest(realRegistrationId);
+            }
+
+            @Override
+            public boolean decodeRemoveResponse(ClientMessage clientMessage) {
+                return ClientRemoveMigrationListenerCodec.decodeResponse(clientMessage);
+            }
+        };
+    }
+
     @Override
     public boolean removePartitionLostListener(UUID registrationId) {
         return listenerService.deregisterListener(registrationId);
@@ -141,7 +169,7 @@ public final class PartitionServiceProxy implements PartitionService {
     private class ClientPartitionLostEventHandler extends ClientAddPartitionLostListenerCodec.AbstractEventHandler
             implements EventHandler<ClientMessage> {
 
-        private PartitionLostListener listener;
+        private final PartitionLostListener listener;
 
         ClientPartitionLostEventHandler(PartitionLostListener listener) {
             this.listener = listener;
@@ -153,5 +181,24 @@ public final class PartitionServiceProxy implements PartitionService {
             listener.partitionLost(new PartitionLostEventImpl(partitionId, lostBackupCount, member.getAddress()));
         }
     }
+
+    private static class ClientMigrationEventHandler extends ClientAddMigrationListenerCodec.AbstractEventHandler
+            implements EventHandler<ClientMessage> {
+
+        private final MigrationListener listener;
+
+        ClientMigrationEventHandler(MigrationListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, int remainingMigrations, long totalElapsedTime) {
+            // TODO: Whether started or finished
+            listener.migrationStarted(new MigrationStateImpl(startTime, plannedMigrations, completedMigrations, totalElapsedTime));
+            listener.migrationFinished(new MigrationStateImpl(startTime, plannedMigrations, completedMigrations, totalElapsedTime));
+        }
+    }
+
+
 
 }

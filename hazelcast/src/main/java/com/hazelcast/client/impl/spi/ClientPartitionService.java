@@ -17,6 +17,7 @@
 package com.hazelcast.client.impl.spi;
 
 import com.hazelcast.internal.serialization.Data;
+import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.Partition;
 
 import javax.annotation.Nonnull;
@@ -42,7 +43,7 @@ public interface ClientPartitionService {
     int getPartitionId(@Nonnull Data key);
 
     /**
-     * @return the partition id associated with given Object
+     * @return thepartition id associated with given Object
      * @throws com.hazelcast.spi.exception.RetryableHazelcastException if partition table is not arrived yet
      */
     int getPartitionId(@Nonnull Object key);
@@ -55,5 +56,4 @@ public interface ClientPartitionService {
     int getPartitionCount();
 
     Partition getPartition(int partitionId);
-
 }

@@ -133,6 +133,10 @@ public interface IPartitionService extends CoreService {
 
     boolean removeMigrationListener(UUID registrationId);
 
+    CompletableFuture<UUID> addMigrationListenerAsync(MigrationListener migrationListener);
+
+    CompletableFuture<Boolean> removeMigrationListenerAsync(UUID registrationId);
+
     UUID addPartitionLostListener(PartitionLostListener partitionLostListener);
 
     CompletableFuture<UUID> addPartitionLostListenerAsync(PartitionLostListener partitionLostListener);
