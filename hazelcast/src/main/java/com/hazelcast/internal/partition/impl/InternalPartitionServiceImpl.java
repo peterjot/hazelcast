@@ -1230,6 +1230,18 @@ public class InternalPartitionServiceImpl implements InternalPartitionService,
     }
 
     @Override
+    public CompletableFuture<UUID> addMigrationListenerAsync(MigrationListener migrationListener) {
+        // TODO: Implement
+        return null;
+    }
+
+    @Override
+    public CompletableFuture<Boolean> removeMigrationListenerAsync(UUID registrationId) {
+        // TODO: Implement
+        return null;
+    }
+
+    @Override
     public UUID addPartitionLostListener(PartitionLostListener listener) {
         return partitionEventManager.addPartitionLostListener(listener);
     }
