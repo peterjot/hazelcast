@@ -29,10 +29,13 @@ import com.hazelcast.client.impl.spi.impl.ListenerMessageCodec;
 import com.hazelcast.cluster.Member;
 import com.hazelcast.internal.partition.MigrationStateImpl;
 import com.hazelcast.internal.partition.PartitionLostEventImpl;
+import com.hazelcast.internal.partition.MigrationEventHandler;
+import com.hazelcast.internal.partition.ReplicaMigrationEventImpl;
 import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.Partition;
 import com.hazelcast.partition.PartitionLostListener;
 import com.hazelcast.partition.PartitionService;
+import com.hazelcast.partition.ReplicaMigrationEvent;
 
 import javax.annotation.Nonnull;
 import java.util.LinkedHashSet;
@@ -182,23 +185,38 @@ public final class PartitionServiceProxy implements PartitionService {
         }
     }
 
-    private static class ClientMigrationEventHandler extends ClientAddMigrationListenerCodec.AbstractEventHandler
+    private class ClientMigrationEventHandler extends ClientAddMigrationListenerCodec.AbstractEventHandler
             implements EventHandler<ClientMessage> {
 
-        private final MigrationListener listener;
+        private final MigrationEventHandler migrationEventHandler;
 
         ClientMigrationEventHandler(MigrationListener listener) {
-            this.listener = listener;
+            this.migrationEventHandler = new MigrationEventHandler(listener);
         }
+
 
         @Override
-        public void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, int remainingMigrations, long totalElapsedTime) {
-            // TODO: Whether started or finished
-            listener.migrationStarted(new MigrationStateImpl(startTime, plannedMigrations, completedMigrations, totalElapsedTime));
-            listener.migrationFinished(new MigrationStateImpl(startTime, plannedMigrations, completedMigrations, totalElapsedTime));
+        public void handleMigrationEvent(long startTime,
+                                         int plannedMigrations,
+                                         int completedMigrations,
+                                         long totalElapsedTime,
+                                         int partitionId,
+                                         int replicaIndex,
+                                         UUID sourceUuid,
+                                         UUID destUuid,
+                                         boolean success,
+                                         long elapsedTime) {
+
+            Member source = clusterService.getMember(sourceUuid);
+            Member destination = clusterService.getMember(destUuid);
+
+            MigrationStateImpl state = new MigrationStateImpl(startTime, plannedMigrations,
+                    completedMigrations, totalElapsedTime);
+
+            ReplicaMigrationEvent event = new ReplicaMigrationEventImpl(state, partitionId,
+                    replicaIndex, source, destination, success, elapsedTime);
+
+            migrationEventHandler.handle(event);
         }
     }
-
-
-
 }

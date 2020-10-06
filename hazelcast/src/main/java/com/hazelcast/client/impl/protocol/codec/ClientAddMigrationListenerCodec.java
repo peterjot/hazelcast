@@ -37,7 +37,7 @@ import static com.hazelcast.client.impl.protocol.codec.builtin.FixedSizeTypesCod
 /**
  * Adds a Migration listener to the cluster.
  */
-@Generated("aa857d9ebd46657e34824b347501998c")
+@Generated("ff4ef43b470d03a4a49b23c5ce4b2b8e")
 public final class ClientAddMigrationListenerCodec {
     //hex: 0x001100
     public static final int REQUEST_MESSAGE_TYPE = 4352;
@@ -50,10 +50,14 @@ public final class ClientAddMigrationListenerCodec {
     private static final int EVENT_MIGRATION_START_TIME_FIELD_OFFSET = PARTITION_ID_FIELD_OFFSET + INT_SIZE_IN_BYTES;
     private static final int EVENT_MIGRATION_PLANNED_MIGRATIONS_FIELD_OFFSET = EVENT_MIGRATION_START_TIME_FIELD_OFFSET + LONG_SIZE_IN_BYTES;
     private static final int EVENT_MIGRATION_COMPLETED_MIGRATIONS_FIELD_OFFSET = EVENT_MIGRATION_PLANNED_MIGRATIONS_FIELD_OFFSET + INT_SIZE_IN_BYTES;
-    private static final int EVENT_MIGRATION_REMAINING_MIGRATIONS_FIELD_OFFSET = EVENT_MIGRATION_COMPLETED_MIGRATIONS_FIELD_OFFSET + INT_SIZE_IN_BYTES;
-    private static final int EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET = EVENT_MIGRATION_REMAINING_MIGRATIONS_FIELD_OFFSET + INT_SIZE_IN_BYTES;
-    private static final int EVENT_MIGRATION_SUCCESS_FIELD_OFFSET = EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET + LONG_SIZE_IN_BYTES;
-    private static final int EVENT_MIGRATION_INITIAL_FRAME_SIZE = EVENT_MIGRATION_SUCCESS_FIELD_OFFSET + BOOLEAN_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET = EVENT_MIGRATION_COMPLETED_MIGRATIONS_FIELD_OFFSET + INT_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_PARTITION_ID_FIELD_OFFSET = EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET + LONG_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_REPLICA_INDEX_FIELD_OFFSET = EVENT_MIGRATION_PARTITION_ID_FIELD_OFFSET + INT_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_SOURCE_UUID_FIELD_OFFSET = EVENT_MIGRATION_REPLICA_INDEX_FIELD_OFFSET + INT_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_DEST_UUID_FIELD_OFFSET = EVENT_MIGRATION_SOURCE_UUID_FIELD_OFFSET + UUID_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_SUCCESS_FIELD_OFFSET = EVENT_MIGRATION_DEST_UUID_FIELD_OFFSET + UUID_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_ELAPSED_TIME_FIELD_OFFSET = EVENT_MIGRATION_SUCCESS_FIELD_OFFSET + BOOLEAN_SIZE_IN_BYTES;
+    private static final int EVENT_MIGRATION_INITIAL_FRAME_SIZE = EVENT_MIGRATION_ELAPSED_TIME_FIELD_OFFSET + LONG_SIZE_IN_BYTES;
     //hex: 0x001102
     private static final int EVENT_MIGRATION_MESSAGE_TYPE = 4354;
 
@@ -104,7 +108,7 @@ public final class ClientAddMigrationListenerCodec {
         return decodeUUID(initialFrame.content, RESPONSE_RESPONSE_FIELD_OFFSET);
     }
 
-    public static ClientMessage encodeMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, int remainingMigrations, long totalElapsedTime, boolean success) {
+    public static ClientMessage encodeMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, long totalElapsedTime, int partitionId, int replicaIndex, java.util.UUID sourceUuid, java.util.UUID destUuid, boolean success, long elapsedTime) {
         ClientMessage clientMessage = ClientMessage.createForEncode();
         ClientMessage.Frame initialFrame = new ClientMessage.Frame(new byte[EVENT_MIGRATION_INITIAL_FRAME_SIZE], UNFRAGMENTED_MESSAGE);
         initialFrame.flags |= ClientMessage.IS_EVENT_FLAG;
@@ -113,9 +117,13 @@ public final class ClientAddMigrationListenerCodec {
         encodeLong(initialFrame.content, EVENT_MIGRATION_START_TIME_FIELD_OFFSET, startTime);
         encodeInt(initialFrame.content, EVENT_MIGRATION_PLANNED_MIGRATIONS_FIELD_OFFSET, plannedMigrations);
         encodeInt(initialFrame.content, EVENT_MIGRATION_COMPLETED_MIGRATIONS_FIELD_OFFSET, completedMigrations);
-        encodeInt(initialFrame.content, EVENT_MIGRATION_REMAINING_MIGRATIONS_FIELD_OFFSET, remainingMigrations);
         encodeLong(initialFrame.content, EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET, totalElapsedTime);
+        encodeInt(initialFrame.content, EVENT_MIGRATION_PARTITION_ID_FIELD_OFFSET, partitionId);
+        encodeInt(initialFrame.content, EVENT_MIGRATION_REPLICA_INDEX_FIELD_OFFSET, replicaIndex);
+        encodeUUID(initialFrame.content, EVENT_MIGRATION_SOURCE_UUID_FIELD_OFFSET, sourceUuid);
+        encodeUUID(initialFrame.content, EVENT_MIGRATION_DEST_UUID_FIELD_OFFSET, destUuid);
         encodeBoolean(initialFrame.content, EVENT_MIGRATION_SUCCESS_FIELD_OFFSET, success);
+        encodeLong(initialFrame.content, EVENT_MIGRATION_ELAPSED_TIME_FIELD_OFFSET, elapsedTime);
         clientMessage.add(initialFrame);
 
         return clientMessage;
@@ -131,23 +139,31 @@ public final class ClientAddMigrationListenerCodec {
                 long startTime = decodeLong(initialFrame.content, EVENT_MIGRATION_START_TIME_FIELD_OFFSET);
                 int plannedMigrations = decodeInt(initialFrame.content, EVENT_MIGRATION_PLANNED_MIGRATIONS_FIELD_OFFSET);
                 int completedMigrations = decodeInt(initialFrame.content, EVENT_MIGRATION_COMPLETED_MIGRATIONS_FIELD_OFFSET);
-                int remainingMigrations = decodeInt(initialFrame.content, EVENT_MIGRATION_REMAINING_MIGRATIONS_FIELD_OFFSET);
                 long totalElapsedTime = decodeLong(initialFrame.content, EVENT_MIGRATION_TOTAL_ELAPSED_TIME_FIELD_OFFSET);
+                int partitionId = decodeInt(initialFrame.content, EVENT_MIGRATION_PARTITION_ID_FIELD_OFFSET);
+                int replicaIndex = decodeInt(initialFrame.content, EVENT_MIGRATION_REPLICA_INDEX_FIELD_OFFSET);
+                java.util.UUID sourceUuid = decodeUUID(initialFrame.content, EVENT_MIGRATION_SOURCE_UUID_FIELD_OFFSET);
+                java.util.UUID destUuid = decodeUUID(initialFrame.content, EVENT_MIGRATION_DEST_UUID_FIELD_OFFSET);
                 boolean success = decodeBoolean(initialFrame.content, EVENT_MIGRATION_SUCCESS_FIELD_OFFSET);
-                handleMigrationEvent(startTime, plannedMigrations, completedMigrations, remainingMigrations, totalElapsedTime, success);
+                long elapsedTime = decodeLong(initialFrame.content, EVENT_MIGRATION_ELAPSED_TIME_FIELD_OFFSET);
+                handleMigrationEvent(startTime, plannedMigrations, completedMigrations, totalElapsedTime, partitionId, replicaIndex, sourceUuid, destUuid, success, elapsedTime);
                 return;
             }
             Logger.getLogger(super.getClass()).finest("Unknown message type received on event handler :" + messageType);
         }
 
         /**
-         * @param startTime 123
-         * @param plannedMigrations 123
-         * @param completedMigrations 123
-         * @param remainingMigrations 123
-         * @param totalElapsedTime 123
-         * @param success 123
+         * @param startTime The id assigned during the listener registration.
+         * @param plannedMigrations The id assigned during the listener registration.
+         * @param completedMigrations The id assigned during the listener registration.
+         * @param totalElapsedTime The id assigned during the listener registration.
+         * @param partitionId The id assigned during the listener registration.
+         * @param replicaIndex The id assigned during the listener registration.
+         * @param sourceUuid The id assigned during the listener registration.
+         * @param destUuid The id assigned during the listener registration.
+         * @param success The id assigned during the listener registration.
+         * @param elapsedTime The id assigned during the listener registration.
         */
-        public abstract void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, int remainingMigrations, long totalElapsedTime, boolean success);
+        public abstract void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, long totalElapsedTime, int partitionId, int replicaIndex, java.util.UUID sourceUuid, java.util.UUID destUuid, boolean success, long elapsedTime);
     }
 }
