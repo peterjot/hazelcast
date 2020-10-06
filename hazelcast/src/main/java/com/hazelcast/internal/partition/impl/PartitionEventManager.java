@@ -115,6 +115,23 @@ public class PartitionEventManager {
         return eventService.deregisterListener(SERVICE_NAME, MIGRATION_EVENT_TOPIC, registrationId);
     }
 
+    public CompletableFuture<UUID> addMigrationListenerAsync(MigrationListener listener) {
+        if (listener == null) {
+            throw new NullPointerException("listener can't be null");
+        }
+
+        final MigrationListenerAdapter adapter = new MigrationListenerAdapter(listener);
+
+        EventService eventService = nodeEngine.getEventService();
+        return eventService.registerListenerAsync(SERVICE_NAME, MIGRATION_EVENT_TOPIC, adapter)
+                .thenApplyAsync(EventRegistration::getId, CALLER_RUNS);
+    }
+
+    public CompletableFuture<Boolean> removeMigrationListenerAsync(UUID registrationId) {
+        EventService eventService = nodeEngine.getEventService();
+        return eventService.deregisterListenerAsync(SERVICE_NAME, MIGRATION_EVENT_TOPIC, registrationId);
+    }
+
     public UUID addPartitionLostListener(PartitionLostListener listener) {
         if (listener == null) {
             throw new NullPointerException("listener can't be null");
@@ -184,6 +201,8 @@ public class PartitionEventManager {
         InternalPartitionLostEventPublisher publisher = new InternalPartitionLostEventPublisher(nodeEngine, event);
         nodeEngine.getExecutionService().execute(SYSTEM_EXECUTOR, publisher);
     }
+
+
 
     /** Task which notifies all {@link PartitionAwareService}s that replicas have been lost. */
     private static class InternalPartitionLostEventPublisher

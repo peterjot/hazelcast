@@ -377,7 +377,7 @@ public class MemberCompatibilityTest_2_1 {
     public void test_ClientAddMigrationListenerCodec_encodeMigrationEvent() {
         int fileClientMessageIndex = 39;
         ClientMessage fromFile = clientMessages.get(fileClientMessageIndex);
-        ClientMessage encoded = ClientAddMigrationListenerCodec.encodeMigrationEvent(aLong, anInt, anInt, anInt, aLong, aBoolean);
+        ClientMessage encoded = ClientAddMigrationListenerCodec.encodeMigrationEvent(aLong, anInt, anInt, aLong, anInt, anInt, aUUID, aUUID, aBoolean, aLong);
         compareClientMessages(fromFile, encoded);
     }
 

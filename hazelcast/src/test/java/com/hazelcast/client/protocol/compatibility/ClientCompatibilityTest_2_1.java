@@ -401,13 +401,17 @@ public class ClientCompatibilityTest_2_1 {
 
     private static class ClientAddMigrationListenerCodecHandler extends ClientAddMigrationListenerCodec.AbstractEventHandler {
         @Override
-        public void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, int remainingMigrations, long totalElapsedTime, boolean success) {
+        public void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, long totalElapsedTime, int partitionId, int replicaIndex, java.util.UUID sourceUuid, java.util.UUID destUuid, boolean success, long elapsedTime) {
             assertTrue(isEqual(aLong, startTime));
             assertTrue(isEqual(anInt, plannedMigrations));
             assertTrue(isEqual(anInt, completedMigrations));
-            assertTrue(isEqual(anInt, remainingMigrations));
             assertTrue(isEqual(aLong, totalElapsedTime));
+            assertTrue(isEqual(anInt, partitionId));
+            assertTrue(isEqual(anInt, replicaIndex));
+            assertTrue(isEqual(aUUID, sourceUuid));
+            assertTrue(isEqual(aUUID, destUuid));
             assertTrue(isEqual(aBoolean, success));
+            assertTrue(isEqual(aLong, elapsedTime));
         }
     }
 
