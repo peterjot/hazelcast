@@ -32,6 +32,7 @@ import com.hazelcast.internal.partition.PartitionLostEventImpl;
 import com.hazelcast.internal.partition.MigrationEventHandler;
 import com.hazelcast.internal.partition.ReplicaMigrationEventImpl;
 import com.hazelcast.partition.MigrationListener;
+import com.hazelcast.partition.MigrationState;
 import com.hazelcast.partition.Partition;
 import com.hazelcast.partition.PartitionLostListener;
 import com.hazelcast.partition.PartitionService;
@@ -196,6 +197,8 @@ public final class PartitionServiceProxy implements PartitionService {
 
 
         @Override
+        @SuppressWarnings("checkstyle:ParameterNumber")
+        // TODO implement custom type :)
         public void handleMigrationEvent(long startTime,
                                          int plannedMigrations,
                                          int completedMigrations,
@@ -210,7 +213,7 @@ public final class PartitionServiceProxy implements PartitionService {
             Member source = clusterService.getMember(sourceUuid);
             Member destination = clusterService.getMember(destUuid);
 
-            MigrationStateImpl state = new MigrationStateImpl(startTime, plannedMigrations,
+            MigrationState state = new MigrationStateImpl(startTime, plannedMigrations,
                     completedMigrations, totalElapsedTime);
 
             ReplicaMigrationEvent event = new ReplicaMigrationEventImpl(state, partitionId,

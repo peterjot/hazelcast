@@ -17,7 +17,6 @@
 package com.hazelcast.client.impl.spi;
 
 import com.hazelcast.internal.serialization.Data;
-import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.Partition;
 
 import javax.annotation.Nonnull;

@@ -46,6 +46,7 @@ import static com.hazelcast.internal.partition.InternalPartitionService.PARTITIO
 import static com.hazelcast.internal.partition.impl.MigrationListenerAdapter.MIGRATION_FINISHED;
 import static com.hazelcast.internal.partition.impl.MigrationListenerAdapter.MIGRATION_STARTED;
 import static com.hazelcast.internal.util.ConcurrencyUtil.CALLER_RUNS;
+import static com.hazelcast.internal.util.Preconditions.checkNotNull;
 import static com.hazelcast.spi.impl.executionservice.ExecutionService.SYSTEM_EXECUTOR;
 
 /**
@@ -116,9 +117,7 @@ public class PartitionEventManager {
     }
 
     public CompletableFuture<UUID> addMigrationListenerAsync(MigrationListener listener) {
-        if (listener == null) {
-            throw new NullPointerException("listener can't be null");
-        }
+        checkNotNull(listener, "listener can't be null");
 
         final MigrationListenerAdapter adapter = new MigrationListenerAdapter(listener);
 

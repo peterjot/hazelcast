@@ -18,18 +18,11 @@ package com.hazelcast.client.impl.protocol.task;
 
 import com.hazelcast.client.impl.protocol.ClientMessage;
 import com.hazelcast.client.impl.protocol.codec.ClientAddMigrationListenerCodec;
-import com.hazelcast.client.impl.protocol.codec.ClientAddPartitionLostListenerCodec;
-import com.hazelcast.cluster.Address;
-import com.hazelcast.cluster.Member;
-import com.hazelcast.cluster.impl.MemberImpl;
 import com.hazelcast.instance.impl.Node;
-import com.hazelcast.internal.cluster.ClusterService;
-import com.hazelcast.internal.cluster.impl.ClusterServiceImpl;
 import com.hazelcast.internal.nio.Connection;
 import com.hazelcast.internal.partition.IPartitionService;
 import com.hazelcast.partition.MigrationListener;
 import com.hazelcast.partition.MigrationState;
-import com.hazelcast.partition.PartitionLostListener;
 import com.hazelcast.partition.ReplicaMigrationEvent;
 
 import java.security.Permission;
@@ -37,8 +30,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static com.hazelcast.internal.partition.InternalPartitionService.MIGRATION_EVENT_TOPIC;
-import static com.hazelcast.internal.partition.InternalPartitionService.PARTITION_LOST_EVENT_TOPIC;
-import static com.hazelcast.spi.impl.InternalCompletableFuture.newCompletedFuture;
 
 public class AddMigrationListenerMessageTask
         extends AbstractAddListenerMessageTask<Boolean> {
@@ -51,36 +42,51 @@ public class AddMigrationListenerMessageTask
     protected CompletableFuture<UUID> processInternal() {
         final IPartitionService partitionService = getService(getServiceName());
 
-
         final MigrationListener listener = new MigrationListener() {
+
             @Override
             public void migrationStarted(MigrationState state) {
+                // ignored
             }
 
             @Override
             public void migrationFinished(MigrationState state) {
+                // ignored
             }
 
             @Override
             public void replicaMigrationCompleted(ReplicaMigrationEvent event) {
-                final MigrationState migrationState = event.getMigrationState();
-                final ClientMessage clientMessage = ClientAddMigrationListenerCodec.encodeMigrationEvent(migrationState.getStartTime(), migrationState.getPlannedMigrations(),
-                        migrationState.getCompletedMigrations(), migrationState.getRemainingMigrations(), migrationState.getTotalElapsedTime(),
-                        true);
-                sendClientMessage(null, clientMessage);
+                if (endpoint.isAlive()) {
+                    ClientMessage eventMessage = encodeMigrationEvent(event);
+                    sendClientMessage(null, eventMessage);
+                }
             }
 
             @Override
             public void replicaMigrationFailed(ReplicaMigrationEvent event) {
-                final MigrationState migrationState = event.getMigrationState();
-                final ClientMessage clientMessage = ClientAddMigrationListenerCodec.encodeMigrationEvent(migrationState.getStartTime(), migrationState.getPlannedMigrations(),
-                        migrationState.getCompletedMigrations(), migrationState.getRemainingMigrations(), migrationState.getTotalElapsedTime(),
-                        false);
-                sendClientMessage(null, clientMessage);
+                if (endpoint.isAlive()) {
+                    ClientMessage eventMessage = encodeMigrationEvent(event);
+                    sendClientMessage(null, eventMessage);
+                }
             }
         };
 
         return partitionService.addMigrationListenerAsync(listener);
+    }
+
+    private ClientMessage encodeMigrationEvent(ReplicaMigrationEvent event) {
+        return ClientAddMigrationListenerCodec.encodeMigrationEvent(
+                event.getMigrationState().getStartTime(),
+                event.getMigrationState().getPlannedMigrations(),
+                event.getMigrationState().getCompletedMigrations(),
+                event.getMigrationState().getTotalElapsedTime(),
+                event.getPartitionId(),
+                event.getReplicaIndex(),
+                event.getSource().getUuid(),
+                event.getDestination().getUuid(),
+                event.isSuccess(),
+                event.getElapsedTime()
+        );
     }
 
     @Override
