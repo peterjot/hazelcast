@@ -37,7 +37,7 @@ import static com.hazelcast.client.impl.protocol.codec.builtin.FixedSizeTypesCod
 /**
  * Adds a Migration listener to the cluster.
  */
-@Generated("ff4ef43b470d03a4a49b23c5ce4b2b8e")
+@Generated("ff5f2a4c6c308ed8bfaf4a5598522ef6")
 public final class ClientAddMigrationListenerCodec {
     //hex: 0x001100
     public static final int REQUEST_MESSAGE_TYPE = 4352;
@@ -64,13 +64,6 @@ public final class ClientAddMigrationListenerCodec {
     private ClientAddMigrationListenerCodec() {
     }
 
-    /**
-     * if true only node that has the migration sends the request, if false
-     * sends all partition lost events.
-     */
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings({"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"})
-    public boolean localOnly;
-
     public static ClientMessage encodeRequest(boolean localOnly) {
         ClientMessage clientMessage = ClientMessage.createForEncode();
         clientMessage.setRetryable(false);
@@ -83,6 +76,10 @@ public final class ClientAddMigrationListenerCodec {
         return clientMessage;
     }
 
+    /**
+     * if true only node that has the migration sends the request, if false
+     * sends all partition lost events.
+     */
     public static boolean decodeRequest(ClientMessage clientMessage) {
         ClientMessage.ForwardFrameIterator iterator = clientMessage.frameIterator();
         ClientMessage.Frame initialFrame = iterator.next();
@@ -100,8 +97,8 @@ public final class ClientAddMigrationListenerCodec {
     }
 
     /**
-    * The listener registration id.
-    */
+     * The listener registration id.
+     */
     public static java.util.UUID decodeResponse(ClientMessage clientMessage) {
         ClientMessage.ForwardFrameIterator iterator = clientMessage.frameIterator();
         ClientMessage.Frame initialFrame = iterator.next();
@@ -163,7 +160,7 @@ public final class ClientAddMigrationListenerCodec {
          * @param destUuid The id assigned during the listener registration.
          * @param success The id assigned during the listener registration.
          * @param elapsedTime The id assigned during the listener registration.
-        */
+         */
         public abstract void handleMigrationEvent(long startTime, int plannedMigrations, int completedMigrations, long totalElapsedTime, int partitionId, int replicaIndex, java.util.UUID sourceUuid, java.util.UUID destUuid, boolean success, long elapsedTime);
     }
 }

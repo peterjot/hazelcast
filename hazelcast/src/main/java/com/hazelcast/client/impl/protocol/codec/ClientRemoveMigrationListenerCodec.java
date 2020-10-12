@@ -36,7 +36,7 @@ import static com.hazelcast.client.impl.protocol.codec.builtin.FixedSizeTypesCod
 /**
  * 123
  */
-@Generated("dd68574a513ea386883e5bf347421f29")
+@Generated("4adaf7827c487bd896a65fa98f4480bc")
 public final class ClientRemoveMigrationListenerCodec {
     //hex: 0x001200
     public static final int REQUEST_MESSAGE_TYPE = 4608;
@@ -50,12 +50,6 @@ public final class ClientRemoveMigrationListenerCodec {
     private ClientRemoveMigrationListenerCodec() {
     }
 
-    /**
-     * The id assigned during the listener registration.
-     */
-    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings({"UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"})
-    public java.util.UUID registrationId;
-
     public static ClientMessage encodeRequest(java.util.UUID registrationId) {
         ClientMessage clientMessage = ClientMessage.createForEncode();
         clientMessage.setRetryable(true);
@@ -68,6 +62,9 @@ public final class ClientRemoveMigrationListenerCodec {
         return clientMessage;
     }
 
+    /**
+     * The id assigned during the listener registration.
+     */
     public static java.util.UUID decodeRequest(ClientMessage clientMessage) {
         ClientMessage.ForwardFrameIterator iterator = clientMessage.frameIterator();
         ClientMessage.Frame initialFrame = iterator.next();
@@ -85,8 +82,8 @@ public final class ClientRemoveMigrationListenerCodec {
     }
 
     /**
-    * true if the listener existed and removed, false otherwise.
-    */
+     * true if the listener existed and removed, false otherwise.
+     */
     public static boolean decodeResponse(ClientMessage clientMessage) {
         ClientMessage.ForwardFrameIterator iterator = clientMessage.frameIterator();
         ClientMessage.Frame initialFrame = iterator.next();
